@@ -12,13 +12,13 @@ router.get('/I/want/title', async (req, res) => {
       for (let i = 0; i < parsedURL.length; i++) {
         try {
           let title = await getTitleResponse(parsedURL[i])
-          result.push(`${"<li>" + addresses[i]} - "${title}"</li></br>`)
+          result.push(`${"<li>" + addresses[i]} - "${title}"</li>`)
         } catch (err) {
-          result.push(`${"<li>" + addresses[i]} - "NO RESPONSE"</li></br>`)
+          result.push(`${"<li>" + addresses[i]} - "NO RESPONSE"</li>`)
         }
       }
       result = result.join(' ')
-      const html = `<html><head></head><body><h1>following are the titles of given websites: </h1><ul>${result}</ul></body></html>`
+      const html = `<html><head></head><body><h1>Following are the titles of given websites: </h1><ul>${result}</ul></body></html>`
       res.set('Content-Type', 'text/html');
       return res.status(200).send(Buffer.from(html))
   
