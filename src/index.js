@@ -7,6 +7,9 @@ const app=express()
 
 app.use(express.json())
 app.use(testRoute)
+app.get('*', function(req, res){
+    res.send('ERROR: Invalid Path.', 404);
+  });
 
 
 app.listen(PORT ,()=>

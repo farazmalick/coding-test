@@ -1,6 +1,8 @@
 const express = require('express');
-const router = new express.Router();
+const async = require('async');
 const { getTitleResponse, URLParser} = require('../helpers/helpers');
+const router = new express.Router();
+
 
 router.get('/I/want/title', async (req, res) => {
   try{
@@ -8,26 +10,37 @@ router.get('/I/want/title', async (req, res) => {
     if (addresses) {
       addresses = typeof addresses === "object" ? addresses : [`${addresses}`]
       let parsedURL = URLParser(addresses)
-      let result = []
-      for (let i = 0; i < parsedURL.length; i++) {
-        try {
-          let title = await getTitleResponse(parsedURL[i])
-          result.push(`${"<li>" + addresses[i]} - "${title}"</li>`)
-        } catch (err) {
-          result.push(`${"<li>" + addresses[i]} - "NO RESPONSE"</li>`)
+      async.series([
+         function(callback) { 
+          let result = []
+      parsedURL.forEach((url)=>{
+        result.push(getTitleResponse(url))
+      })
+          callback(null,result) 
+        },
+    ]).then(async (results) => {
+        let result= []
+        for (let i = 0; i < parsedURL.length; i++) {
+          try {
+            let title = await results[0][i]
+            result.push(`${"<li>" + addresses[i]} - "${title}"</li>`);
+          } catch (err) {
+            result.push(`${"<li>" + addresses[i]} - "NO RESPONSE"</li>`);
+          }
         }
-      }
-      result = result.join(' ')
-      const html = `<html><head></head><body><h1>Following are the titles of given websites: </h1><ul>${result}</ul></body></html>`
-      res.set('Content-Type', 'text/html');
-      return res.status(200).send(Buffer.from(html))
-  
+      const html = `<html><head></head><body><h1>Following are the titles of given websites: </h1><ul>${result.join(' ')}</ul></body></html>`;
+      return res.set('Content-Type', 'text/html').status(200).send(Buffer.from(html));
+    }).catch(err => {
+        console.log(err);
+        return res.status(400).send("ERROR: Bad Request");
+    });
   
     } else {
-      return res.status(404).send("ERROR: No URL Found.")
+      return res.status(404).send("ERROR: No URL Found.");
     }
   } catch(err) {
-    return res.status(400).send("ERROR: Bad Request")
+    console.log(err);
+    return res.status(400).send("ERROR: Bad Request");
   }
 })
 
